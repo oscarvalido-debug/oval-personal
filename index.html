@@ -449,8 +449,9 @@ async function tryKey(){
   var err=document.getElementById('ke');
   err.style.display='none';
   if(v.length<3) return;
-  var {data,error}=await sb.from('cv_claves').select('*').eq('clave',v).eq('activa',true).single();
+  var {data,error}=await sb.from('cv_claves').select('*').eq('clave',v).maybeSingle();
   if(error||!data){err.style.display='block';err.textContent='Clave incorrecta o expirada.';return;}
+  if(!data.activa){err.style.display='block';err.textContent='Esta clave ha sido desactivada.';return;}
   if(data.expiry&&new Date(data.expiry)<new Date()){err.style.display='block';err.textContent='Esta clave ha expirado.';return;}
   currentKey=v;currentData.clave=data;
   setTimeout(showMsg,200);
@@ -621,8 +622,8 @@ async function addClave(){
 }
 
 async function delClave(id){
-  await sb.from('cv_claves').update({activa:false}).eq('id',id);
-  loadAdminData();
+  await sb.from('cv_claves').delete().eq('id',id);
+  await loadAdminData();
 }
 
 async function addExp(){
@@ -647,8 +648,9 @@ async function addHab(){
 }
 
 async function delItem(table,id){
-  await sb.from(table).update({activo:false}).eq('id',id);
-  loadAdminData();loadCV();
+  await sb.from(table).delete().eq('id',id);
+  await loadAdminData();
+  await loadCV();
 }
 
 document.getElementById('ki').addEventListener('keydown',function(e){if(e.key==='Enter') tryKey();});
