@@ -548,10 +548,10 @@ function renderIA(list){
   if(!list.length){document.getElementById('ia-list').innerHTML='<div class="loading">Sin bloques IA aun. Anadir desde Admin.</div>';return;}
   document.getElementById('ia-list').innerHTML=list.map(function(item,i){
     var id='iac'+i;
-    var panel=item.aplicaciones?'<div class="dpanel" id="dp-'+id+'"><div class="dp-ttl">Aplicaciones reales</div><div class="dp-txt">'+item.aplicaciones.replace(/
-/g,'<br>')+'</div></div>':'';
-    var btn=item.aplicaciones?'<div class="ebtns"><button class="bg" onclick="togP('dp-'+id+'')">+ Aplicaciones</button></div>':'';
-    return '<div class="ecard"><div class="ecard-hd" onclick="togCard(''+id+'')"><div class="ecard-left"><div class="ecard-title">'+item.titulo+'</div><div class="ecard-co">'+(item.subtitulo||'')+'</div></div><div class="ecard-chev" id="ch-'+id+'">›</div></div><div class="ecard-body" id="'+id+'"><div class="edesc">'+(item.descripcion||'')+'</div>'+btn+panel+'</div></div>';
+    var aplic=item.aplicaciones?(item.aplicaciones.replace(/\n/g,'<br>')):'';
+    var panel=item.aplicaciones?'<div class="dpanel" id="dp-'+id+'"><div class="dp-ttl">Aplicaciones reales</div><div class="dp-txt">'+aplic+'</div></div>':'';
+    var btn=item.aplicaciones?'<div class="ebtns"><button class="bg" onclick="togP(\'dp-'+id+'\')">+ Aplicaciones</button></div>':'';
+    return '<div class="ecard"><div class="ecard-hd" onclick="togCard(\''+id+'\')"><div class="ecard-left"><div class="ecard-title">'+item.titulo+'</div><div class="ecard-co">'+(item.subtitulo||'')+'</div></div><div class="ecard-chev" id="ch-'+id+'">&#8250;</div></div><div class="ecard-body" id="'+id+'"><div class="edesc">'+(item.descripcion||'')+'</div>'+btn+panel+'</div></div>';
   }).join('');
 }
 
