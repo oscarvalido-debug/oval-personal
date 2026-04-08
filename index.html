@@ -335,14 +335,7 @@ textarea.adm-inp{resize:vertical;min-height:80px}
         <div class="ia-top"><div class="ia-ico">AI</div><div><div class="ia-title">IA-Augmented Professional</div><div class="ia-sub">Integracion activa de inteligencia artificial en el trabajo diario</div></div></div>
         <div class="ia-tools"><span class="ia-tool hi">Claude (Anthropic)</span><span class="ia-tool hi">ChatGPT</span><span class="ia-tool">Copilot</span><span class="ia-tool">Gemini</span><span class="ia-tool">Notion AI</span><span class="ia-tool">Midjourney</span></div>
       </div>
-      <div class="ecard">
-        <div class="ecard-hd" onclick="togCard('ia1')"><div class="ecard-left"><div class="ecard-title">IA aplicada a Logistica</div><div class="ecard-co">Caso practico real</div></div><div class="ecard-chev" id="ch-ia1">›</div></div>
-        <div class="ecard-body" id="ia1"><div class="edesc">Uso activo de IA para optimizar operaciones: reportes automaticos, analisis de KPIs y resolucion de incidencias con mayor velocidad.</div><div class="ebtns"><button class="bg" onclick="togP('dp-ia1')">+ Aplicaciones</button></div><div class="dpanel" id="dp-ia1"><div class="dp-ttl">Aplicaciones reales</div><div class="dp-txt">· Informes de rendimiento en minutos<br>· Analisis de rutas y cuellos de botella<br>· Comunicados internos automatizados<br>· Dashboards y herramientas propias</div></div></div>
-      </div>
-      <div class="ecard">
-        <div class="ecard-hd" onclick="togCard('ia2')"><div class="ecard-left"><div class="ecard-title">IA aplicada a Gestion de Equipos</div><div class="ecard-co">Liderazgo aumentado</div></div><div class="ecard-chev" id="ch-ia2">›</div></div>
-        <div class="ecard-body" id="ia2"><div class="edesc">IA como asistente en RRHH, formacion del equipo y planificacion operativa.</div><div class="ebtns"><button class="bg" onclick="togP('dp-ia2')">+ Aplicaciones</button></div><div class="dpanel" id="dp-ia2"><div class="dp-ttl">Aplicaciones reales</div><div class="dp-txt">· Planes de formacion con IA<br>· Analisis de rendimiento individual<br>· Evaluaciones de desempeno<br>· Planificacion de turnos optimizada</div></div></div>
-      </div>
+      <div id="ia-list"><div class="loading">Cargando...</div></div>
     </div>
   </div>
 </div>
@@ -360,6 +353,7 @@ textarea.adm-inp{resize:vertical;min-height:80px}
       <div class="adm-tab" onclick="showAdmTab('exp',this)">Experiencia</div>
       <div class="adm-tab" onclick="showAdmTab('form',this)">Formacion</div>
       <div class="adm-tab" onclick="showAdmTab('hab',this)">Habilidades</div>
+      <div class="adm-tab" onclick="showAdmTab('ia',this)">IA</div>
     </div>
 
     <!-- GENERAL -->
@@ -418,6 +412,17 @@ textarea.adm-inp{resize:vertical;min-height:80px}
     </div>
 
     <!-- HABILIDADES -->
+    <div class="adm-tp" id="adm-tp-ia">
+      <div id="adm-ia-list"></div>
+      <div class="adm-lbl" style="margin-top:14px">Nuevo bloque IA</div>
+      <input class="adm-inp" id="nia-titulo" placeholder="Titulo (ej: IA aplicada a Logistica)"/>
+      <input class="adm-inp" id="nia-subtitulo" placeholder="Subtitulo (ej: Caso practico real)"/>
+      <textarea class="adm-inp" id="nia-desc" rows="3" placeholder="Descripcion del uso de IA..."></textarea>
+      <textarea class="adm-inp" id="nia-aplic" rows="4" placeholder="Aplicaciones concretas (una por linea con ·)"></textarea>
+      <button class="adm-save" onclick="addIA()">+ Anadir bloque</button>
+      <div class="adm-msg" id="msg-ia">Bloque anadido</div>
+    </div>
+
     <div class="adm-tp" id="adm-tp-hab">
       <div id="adm-hab-list"></div>
       <div class="adm-lbl" style="margin-top:14px">Nueva habilidad</div>
@@ -479,11 +484,12 @@ async function enterCV(){
 }
 
 async function loadCV(){
-  var [cfg,exp,form,hab]=await Promise.all([
+  var [cfg,exp,form,hab,ia]=await Promise.all([
     sb.from('cv_config').select('*').single(),
     sb.from('cv_experiencia').select('*').eq('activo',true).order('orden'),
     sb.from('cv_formacion').select('*').eq('activo',true).order('orden'),
-    sb.from('cv_habilidades').select('*').eq('activo',true).order('orden')
+    sb.from('cv_habilidades').select('*').eq('activo',true).order('orden'),
+    sb.from('cv_ia').select('*').eq('activo',true).order('orden')
   ]);
   if(cfg.data){
     var c=cfg.data;
@@ -498,6 +504,7 @@ async function loadCV(){
   renderExp(exp.data||[]);
   renderForm(form.data||[]);
   renderHab(hab.data||[]);
+  renderIA(ia.data||[]);
 }
 
 function renderExp(list){
@@ -534,6 +541,17 @@ function renderHab(list){
   if(!list.length){document.getElementById('hab-list').innerHTML='<div class="loading">Sin habilidades aun.</div>';return;}
   document.getElementById('hab-list').innerHTML=list.map(function(h){
     return '<div class="sk"><div class="sk-row"><span class="sk-name">'+h.nombre+'</span><span class="sk-pct">'+h.porcentaje+'%</span></div><div class="sk-track"><div class="sk-fill" data-p="'+h.porcentaje+'"></div></div></div>';
+  }).join('');
+}
+
+function renderIA(list){
+  if(!list.length){document.getElementById('ia-list').innerHTML='<div class="loading">Sin bloques IA aun. Anadir desde Admin.</div>';return;}
+  document.getElementById('ia-list').innerHTML=list.map(function(item,i){
+    var id='iac'+i;
+    var panel=item.aplicaciones?'<div class="dpanel" id="dp-'+id+'"><div class="dp-ttl">Aplicaciones reales</div><div class="dp-txt">'+item.aplicaciones.replace(/
+/g,'<br>')+'</div></div>':'';
+    var btn=item.aplicaciones?'<div class="ebtns"><button class="bg" onclick="togP('dp-'+id+'')">+ Aplicaciones</button></div>':'';
+    return '<div class="ecard"><div class="ecard-hd" onclick="togCard(''+id+'')"><div class="ecard-left"><div class="ecard-title">'+item.titulo+'</div><div class="ecard-co">'+(item.subtitulo||'')+'</div></div><div class="ecard-chev" id="ch-'+id+'">›</div></div><div class="ecard-body" id="'+id+'"><div class="edesc">'+(item.descripcion||'')+'</div>'+btn+panel+'</div></div>';
   }).join('');
 }
 
@@ -576,16 +594,18 @@ async function loadAdminData(){
   document.getElementById('adm-cargo').value=cfg.cargo||'';
   document.getElementById('adm-sobre').value=(cfg.sobre_mi||'');
   document.getElementById('adm-foto').value=cfg.foto_url||'';
-  var [claves,exp,form,hab]=await Promise.all([
+  var [claves,exp,form,hab,ia]=await Promise.all([
     sb.from('cv_claves').select('*').order('created_at'),
     sb.from('cv_experiencia').select('*').order('orden'),
     sb.from('cv_formacion').select('*').order('orden'),
-    sb.from('cv_habilidades').select('*').order('orden')
+    sb.from('cv_habilidades').select('*').order('orden'),
+    sb.from('cv_ia').select('*').order('orden')
   ]);
   renderAdmClaves(claves.data||[]);
   renderAdmList('adm-exp-list',exp.data||[],'titulo','empresa');
   renderAdmList('adm-form-list',form.data||[],'titulo','centro');
   renderAdmList('adm-hab-list',hab.data||[],'nombre','porcentaje');
+  renderAdmList('adm-ia-list',ia.data||[],'titulo','subtitulo');
 }
 
 function renderAdmClaves(list){
@@ -596,7 +616,7 @@ function renderAdmClaves(list){
 
 function renderAdmList(containerId,list,field1,field2){
   document.getElementById(containerId).innerHTML=list.map(function(item){
-    var table=containerId.includes('exp')?'cv_experiencia':containerId.includes('form')?'cv_formacion':'cv_habilidades';
+    var table=containerId.includes('exp')?'cv_experiencia':containerId.includes('form')?'cv_formacion':containerId.includes('ia')?'cv_ia':'cv_habilidades';
     return '<div class="item-row"><div class="item-row-txt"><div>'+item[field1]+'</div><div class="item-row-sub">'+item[field2]+'</div></div><button class="item-del" onclick="delItem(\''+table+'\',\''+item.id+'\')">×</button></div>';
   }).join('');
 }
@@ -645,6 +665,27 @@ async function addHab(){
   if(!obj.nombre) return;
   var {error}=await sb.from('cv_habilidades').insert(obj);
   if(!error){showAdmMsg('msg-hab');loadAdminData();loadCV();}
+}
+
+async function addIA(){
+  var obj={
+    titulo:document.getElementById('nia-titulo').value.trim(),
+    subtitulo:document.getElementById('nia-subtitulo').value.trim()||null,
+    descripcion:document.getElementById('nia-desc').value.trim()||null,
+    aplicaciones:document.getElementById('nia-aplic').value.trim()||null,
+    activo:true,orden:99
+  };
+  if(!obj.titulo) return;
+  var {error}=await sb.from('cv_ia').insert(obj);
+  if(!error){
+    showAdmMsg('msg-ia');
+    document.getElementById('nia-titulo').value='';
+    document.getElementById('nia-subtitulo').value='';
+    document.getElementById('nia-desc').value='';
+    document.getElementById('nia-aplic').value='';
+    await loadAdminData();
+    await loadCV();
+  }
 }
 
 async function delItem(table,id){
